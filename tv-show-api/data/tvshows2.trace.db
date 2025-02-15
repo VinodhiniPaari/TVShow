@@ -1,0 +1,6 @@
+2025-02-14 23:46:30.698772+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "TVSHOWS" not found; SQL statement:
+SELECT * FROM TVSHOWS [42102-224]
+2025-02-14 23:51:43.099315+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "[*]TVSHOW_GENRES"; expected "TRUNCATE"; SQL statement:
+TVSHOW_GENRES [42001-224]
