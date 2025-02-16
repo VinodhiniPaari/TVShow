@@ -33,17 +33,51 @@
 .image-container {
   flex: 1;
   max-width: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .show-image {
   width: 100%;
+  height: auto;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(255, 0, 0, 0.5);
   transition: transform 0.3s;
+  object-fit: cover;
 }
 
-.show-image:hover {
-  transform: scale(1.03);
+@media (min-width: 769px) {
+  .show-image:hover {
+    transform: scale(1.2);
+    z-index: 10;
+    position: relative;
+    transition: transform 0.3s ease-in-out;
+  }
+}
+
+@media (max-width: 768px) {
+  .show-image {
+    max-width: 90%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .show-image:active {
+    transform: scale(1.1);
+  }
+
+  .image-container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .back-button {
+    position: relative;
+    z-index: 2;
+  }
 }
 
 .details-container {

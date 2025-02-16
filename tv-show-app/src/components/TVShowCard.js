@@ -5,7 +5,6 @@ import alternateImage from "../assets/images/alternateImage.jpg";
 
 const TVShowCard = ({ show }) => {
   const imageUrl = show.image?.medium || show.imageUrl || alternateImage;
-  console.log("TV Show Data:", show);
 
   return (
     <div className="col-md-2" style={{ cursor: "pointer" }}>
@@ -24,6 +23,10 @@ const TVShowCard = ({ show }) => {
               e.target.src = alternateImage;
             }}
           />
+          <div className="hover-content">
+            <h5>{show.name}</h5>
+            <button className="preview-button">Preview</button>
+          </div>
           <div className="card-body">
             <h5 className="card-title">{show.name}</h5>
           </div>

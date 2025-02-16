@@ -1,7 +1,6 @@
-import React, { createContext, useReducer, useEffect } from "react";
+import React, { createContext, useReducer, useEffect, useRef, useCallback } from "react";
 import { fetchTVShows } from "../services/apiService";
 
-// Initial State
 const initialState = {
   tvShows: [],
   page: 0,
@@ -13,9 +12,10 @@ const initialState = {
   sortBy: "name",
   pageSize: 10,
   showAll: false,
+  isFetching: false,
+  hasMoreData: true,
 };
 
-// Actions
 const ACTIONS = {
   SET_TV_SHOWS: "SET_TV_SHOWS",
   SET_LOADING: "SET_LOADING",
@@ -25,9 +25,10 @@ const ACTIONS = {
   SET_SORT: "SET_SORT",
   SET_PAGE_SIZE: "SET_PAGE_SIZE",
   SET_SHOW_ALL: "SET_SHOW_ALL",
+  SET_FETCHING: "SET_FETCHING",
+  SET_HAS_MORE: "SET_HAS_MORE",
 };
 
-// Reducer function
 const tvShowReducer = (state, action) => {
   switch (action.type) {
     case ACTIONS.SET_LOADING:
@@ -38,15 +39,13 @@ const tvShowReducer = (state, action) => {
         tvShows: state.showAll
           ? [...state.tvShows, ...action.payload.content]
           : action.payload.content,
-        totalPages:
-          action.payload.totalPages ||
-          Math.ceil(action.payload.totalElements / state.pageSize),
-        totalRecords:
-          action.payload.totalElements || state.tvShows.length * state.pageSize,
+        totalPages: action.payload.totalPages,
+        totalRecords: action.payload.totalElements,
         loading: false,
+        isFetching: false,
       };
     case ACTIONS.SET_ERROR:
-      return { ...state, error: action.payload, loading: false };
+      return { ...state, error: action.payload, loading: false, isFetching: false };
     case ACTIONS.SET_PAGE:
       return { ...state, page: action.payload };
     case ACTIONS.SET_FILTER:
@@ -56,12 +55,11 @@ const tvShowReducer = (state, action) => {
     case ACTIONS.SET_PAGE_SIZE:
       return { ...state, pageSize: action.payload, page: 0, tvShows: [] };
     case ACTIONS.SET_SHOW_ALL:
-      return {
-        ...state,
-        showAll: action.payload,
-        page: 0,
-        tvShows: [],
-      };
+      return { ...state, showAll: action.payload, page: 0, tvShows: [] };
+    case ACTIONS.SET_FETCHING:
+      return { ...state, isFetching: action.payload };
+    case ACTIONS.SET_HAS_MORE:
+      return { ...state, hasMoreData: action.payload };
     default:
       return state;
   }
@@ -71,10 +69,12 @@ export const TVShowContext = createContext();
 
 export const TVShowProvider = ({ children }) => {
   const [state, dispatch] = useReducer(tvShowReducer, initialState);
+  const observer = useRef();
 
   useEffect(() => {
     const fetchData = async () => {
-      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      if (state.isFetching || !state.hasMoreData) return; // Prevent duplicate calls
+      dispatch({ type: ACTIONS.SET_FETCHING, payload: true });
 
       try {
         const response = await fetchTVShows(
@@ -83,7 +83,9 @@ export const TVShowProvider = ({ children }) => {
           state.sortBy,
           state.filter
         );
+
         dispatch({ type: ACTIONS.SET_TV_SHOWS, payload: response });
+        dispatch({ type: ACTIONS.SET_HAS_MORE, payload: response.content.length > 0 });
       } catch (error) {
         dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
       }
@@ -92,8 +94,22 @@ export const TVShowProvider = ({ children }) => {
     fetchData();
   }, [state.page, state.pageSize, state.filter, state.sortBy, state.showAll]);
 
+  const lastElementRef = useCallback((node) => {
+    if (state.loading || !state.hasMoreData) return;
+
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        dispatch({ type: ACTIONS.SET_PAGE, payload: state.page + 1 });
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [state.page, state.loading, state.hasMoreData]);
+
   return (
-    <TVShowContext.Provider value={{ state, dispatch }}>
+    <TVShowContext.Provider value={{ state, dispatch, lastElementRef }}>
       {children}
     </TVShowContext.Provider>
   );

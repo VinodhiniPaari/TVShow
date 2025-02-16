@@ -11,7 +11,6 @@ const TVShowList = () => {
 
   useEffect(() => {
     if (!showAll || loading) return;
-
     const handleScroll = () => {
       const scrollHeight = document.documentElement.scrollHeight;
       const currentScroll = window.innerHeight + window.scrollY;
@@ -20,8 +19,13 @@ const TVShowList = () => {
         dispatch({ type: "SET_PAGE", payload: page + 1 });
       }
     };
-
+    const checkAndLoad = () => {
+      if (document.documentElement.scrollHeight <= window.innerHeight) {
+        dispatch({ type: "SET_PAGE", payload: page + 1 });
+      }
+    };
     window.addEventListener("scroll", handleScroll);
+    requestAnimationFrame(checkAndLoad);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [showAll, page, dispatch, loading]);
 
@@ -49,7 +53,6 @@ const TVShowList = () => {
           <option value="premiered">Sort by Date</option>
         </select>
 
-        {/* Auto-Scroll Toggle Button */}
         <div className="toggle-container">
           <label className="toggle-switch">
             <input
