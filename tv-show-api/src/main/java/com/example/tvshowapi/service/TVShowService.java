@@ -10,7 +10,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class TVShowService {
@@ -26,7 +25,7 @@ public class TVShowService {
         return tvShowRepository.findAll()
                 .stream()
                 .map(TVShow::getName)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // Fetch TV Shows with Pagination, Sorting, and Filtering

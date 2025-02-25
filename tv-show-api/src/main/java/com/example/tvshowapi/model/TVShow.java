@@ -8,7 +8,6 @@ import java.util.List;
 public class TVShow {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String url;
     private String name;
@@ -275,11 +274,9 @@ class WebChannel {
     private String officialSite;
 
     @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "name", column = @Column(name = "country_name")),
-            @AttributeOverride(name = "code", column = @Column(name = "country_code")),
-            @AttributeOverride(name = "timezone", column = @Column(name = "country_timezone"))
-    })
+    @AttributeOverride(name = "name", column = @Column(name = "country_name"))
+    @AttributeOverride(name = "code", column = @Column(name = "country_code"))
+    @AttributeOverride(name = "timezone", column = @Column(name = "country_timezone"))
     private Country country;
 
     public Integer getId() {
@@ -408,17 +405,13 @@ class Image {
 class Links {
 
     @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "href", column = @Column(name = "self_href")),
-            @AttributeOverride(name = "name", column = @Column(name = "self_link_name"))
-    })
+    @AttributeOverride(name = "href", column = @Column(name = "self_href"))
+    @AttributeOverride(name = "name", column = @Column(name = "self_link_name"))
     private Link self;
 
     @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "href", column = @Column(name = "previousepisode_href")),
-            @AttributeOverride(name = "name", column = @Column(name = "previousepisode_link_name"))
-    })
+    @AttributeOverride(name = "href", column = @Column(name = "previousepisode_href"))
+    @AttributeOverride(name = "name", column = @Column(name = "previousepisode_link_name"))
     private Link previousepisode;
 
     public Link getSelf() {

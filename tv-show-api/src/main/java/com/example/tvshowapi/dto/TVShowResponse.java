@@ -25,9 +25,9 @@ public class TVShowResponse {
     private Image image;
     private String summary;
     private Integer updated;
-    private Links _links;
+    private Links links;
 
-    // ✅ Getters
+    // Getters
     public Integer getId() {
         return id;
     }
@@ -116,11 +116,9 @@ public class TVShowResponse {
         return updated;
     }
 
-    public Links get_links() {
-        return _links;
-    }
-
-    // ✅ Nested Classes
+    public Links getLinks() {
+        return links;
+    }    
 
     public static class Schedule {
         private String time;

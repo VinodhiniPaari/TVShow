@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 import com.example.tvshowapi.exception.TVShowExceptions;
 
 @Service
@@ -29,7 +28,7 @@ public class TVMazeService {
     private final TVShowRepository repository;
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
-    @Value("classpath:tvtitles.txt") // Load file from resources
+    @Value("classpath:tvtitles.txt")
     private Resource tvShowFile;
 
     public TVMazeService(RestTemplate restTemplate, TVShowRepository repository) {
@@ -39,19 +38,20 @@ public class TVMazeService {
 
     public List<TVShow> fetchAndStoreAllTVShowsFromFile() {
         try (InputStream inputStream = tvShowFile.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            
-            List<String> tvShowNames = reader.lines().collect(Collectors.toList());
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+
+            List<String> tvShowNames = reader.lines().toList();
             logger.info("Loaded {} TV Show names from file", tvShowNames.size());
 
             List<CompletableFuture<TVShow>> futures = tvShowNames.stream()
                     .map(name -> CompletableFuture.supplyAsync(() -> fetchTVShowDetails(name.trim()), executor))
-                    .collect(Collectors.toList());
+                    .toList();
 
             List<TVShow> tvShows = futures.stream()
                     .map(CompletableFuture::join)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
 
             repository.saveAll(tvShows);
             logger.info("Saved {} TV Shows to DB", tvShows.size());
@@ -69,16 +69,20 @@ public class TVMazeService {
                     + URLEncoder.encode(title, StandardCharsets.UTF_8);
             TVShow response = restTemplate.getForObject(apiUrl, TVShow.class);
 
-            if (response != null) {
+            if (response != null && response.getId() != null) {
+                if (repository.existsById(response.getId())) {
+                    logger.info("TV Show '{}' already exists in the database, skipping.", title);
+                    return response;
+                }
+
                 return repository.save(response);
             }
         } catch (Exception e) {
             logger.warn("No details found for TV Show: {}", title);
         }
 
-        TVShow emptyTVShow = new TVShow();
-        emptyTVShow.setName(title);
-        return emptyTVShow;
+        logger.info("Skipping TV Show '{}' because no valid ID was found.", title);
+        return null;
     }
 
     public TVShow fetchTVShow(String title) {
