@@ -70,10 +70,13 @@ export const TVShowContext = createContext();
 export const TVShowProvider = ({ children }) => {
   const [state, dispatch] = useReducer(tvShowReducer, initialState);
   const observer = useRef();
+  const isInitialRender = useRef(true);
+  const fetchingRef = useRef(false); // Add a fetching ref
 
   useEffect(() => {
     const fetchData = async () => {
-      if (state.isFetching || !state.hasMoreData) return; // Prevent duplicate calls
+      if (fetchingRef.current || !state.hasMoreData) return; // Use fetchingRef
+      fetchingRef.current = true; // Set fetching to true *before* the API call
       dispatch({ type: ACTIONS.SET_FETCHING, payload: true });
 
       try {
@@ -88,11 +91,15 @@ export const TVShowProvider = ({ children }) => {
         dispatch({ type: ACTIONS.SET_HAS_MORE, payload: response.content.length > 0 });
       } catch (error) {
         dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
+      } finally {
+        fetchingRef.current = false; // Reset fetching *after* the API call, even on error
+        dispatch({ type: ACTIONS.SET_FETCHING, payload: false });
       }
     };
 
     fetchData();
   }, [state.page, state.pageSize, state.filter, state.sortBy, state.showAll]);
+
 
   const lastElementRef = useCallback((node) => {
     if (state.loading || !state.hasMoreData) return;
@@ -100,12 +107,18 @@ export const TVShowProvider = ({ children }) => {
     if (observer.current) observer.current.disconnect();
 
     observer.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && !isInitialRender.current && !fetchingRef.current) {
+        // Check fetchingRef here as well
         dispatch({ type: ACTIONS.SET_PAGE, payload: state.page + 1 });
       }
     });
 
     if (node) observer.current.observe(node);
+
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+    }
+
   }, [state.page, state.loading, state.hasMoreData]);
 
   return (

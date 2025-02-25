@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { Outlet } from "react-router-dom";
-import TvShowList from "../components/TVShowList";
 import { FaTv, FaFilter, FaTimes } from "react-icons/fa";
 import "../styles/Home.css";
+
+const TvShowList = lazy(() => import("../components/TVShowList"));
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,7 +14,7 @@ const Home = () => {
       <header className="header">
         <div className="header-overlay">
           <h1 className="title">
-            <FaTv className="icon" /> Discover Your Favorite{" "}
+            <FaTv className="icon" aria-hidden="true" /> Discover Your Favorite{" "}
             <span>TV Shows</span>
           </h1>
         </div>
@@ -21,39 +22,50 @@ const Home = () => {
 
       <div className="main-content">
         {/* Sidebar */}
-        <div className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
-          <button className="close-btn" onClick={() => setIsSidebarOpen(false)}>
-            <FaTimes />
+        <aside
+          className={`sidebar ${isSidebarOpen ? "open" : ""}`}
+          aria-label="Filter options"
+        >
+          <button
+            className="close-btn"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close filter panel"
+          >
+            <FaTimes aria-hidden="true" />
           </button>
-          <h3>Filters</h3>
+          <h2>Filters</h2>
           <label>
-            <input type="checkbox" /> Action
+            <input type="checkbox" aria-label="Filter by Action genre" /> Action
           </label>
           <label>
-            <input type="checkbox" /> Drama
+            <input type="checkbox" aria-label="Filter by Drama genre" /> Drama
           </label>
           <label>
-            <input type="checkbox" /> Comedy
+            <input type="checkbox" aria-label="Filter by Comedy genre" /> Comedy
           </label>
           <p>
             Note: This filter is for design purposes. Apply more filters and
             functionality in the future
           </p>
-        </div>
+        </aside>
 
         {!isSidebarOpen && (
           <button
             className="sidebar-toggle"
             onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open filter panel"
           >
-            <FaFilter /> <span>Filters</span>
+            <FaFilter aria-hidden="true" /> <span>Filters</span>
           </button>
         )}
 
-        <div className={`content ${isSidebarOpen ? "shifted" : ""}`}>
-          <TvShowList searchTerm={searchTerm} />
+        <main className={`content ${isSidebarOpen ? "shifted" : ""}`}>
+          <h2 className="visually-hidden">TV Show List</h2>{" "}
+          <Suspense fallback={<div>Loading TV Shows...</div>}>
+            <TvShowList searchTerm={searchTerm} />
+          </Suspense>
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );
